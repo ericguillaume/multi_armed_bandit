@@ -4,15 +4,16 @@ from bandit_algorithm import *
 
 if __name__ == "__main__":
     K = 10
-    T = 10000
-    NB_SCENARIOS = 100
+    T = 2 #10000
+    NB_SCENARIOS = 1 #100
 
     sum_results = 0
     for _ in range(NB_SCENARIOS):
         casino = CasinoMachines(K)
-        bandit = KLUCBAlgorithm(K, T)
+        bandit = HomeMadeBayesianOptimistAlgorithm(K, T)
 
         for _ in range(T):
+            print("bouuuu")
             k = bandit.get_next_decision()
             result = casino.run(k)
             bandit.process_decision_results(k, result)

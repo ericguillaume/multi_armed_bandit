@@ -1,5 +1,6 @@
 import operator
 import math
+from scipy.stats import binom
 
 
 class RandomAlgorithm:
@@ -24,7 +25,6 @@ class GittinsIndexAlgorithm:
         self.K = K
         self.T = T
         self.sum_results = 0
-        # self.machines_estimated_probabilities = [0.0] * K
         self.machines_number_of_attempts = [0.0] * K
         self.machines_sum_of_results = [0.0] * K
 
@@ -179,4 +179,59 @@ class KLUCBAlgorithm:
 
     def get_sum_results(self):
         return self.sum_results
+
+
+
+class HomeMadeBayesianOptimistAlgorithm:
+
+    def __init__(self, K, T):
+        self.K = K
+        self.T = T
+        self.t = 0
+        self.sum_results = 0
+        self.machines_number_of_attempts = [0.0] * K
+        self.machines_sum_of_results = [0.0] * K
+
+    def get_machine_estimated_probability(self, k):
+        number_of_attempt = self.machines_number_of_attempts[k]
+        if number_of_attempt == 0:
+            return 0.0
+        else:
+            return self.machines_sum_of_results[k] / number_of_attempt
+
+    def get_optimist_bayesian_probability(self, k, upper_bound):
+        number_of_attempts = self.machines_number_of_attempts[k]
+        sum_of_results = self.machines_sum_of_results[k]
+        estimated_probability = self.get_machine_estimated_probability(k)
+
+        upper_bound_step = self.find_upper_bound_step(upper_bound, number_of_attempts)
+        return sum([binom.pmf(i, upper_bound_step, estimated_probability) for i in range(upper_bound_step + 1)]) / math.pow(2, number_of_attempts)
+
+    def get_next_decision(self):
+        print("test")
+        if self.t < self.K:
+            return self.t
+        else:
+            machines_estimated_probabilities = set([self.get_machine_estimated_probability(k) for k in range(self.K)])
+            print(machines_estimated_probabilities)
+            print(type(machines_estimated_probabilities))
+            max_probability = max(machines_estimated_probabilities)
+            print(machines_estimated_probabilities - {max_probability})
+            second_max_probability = max(machines_estimated_probabilities - {max_probability})
+            upper_bound = min(1, max_probability + (max_probability - second_max_probability))
+
+            machines_optimist_probabilities = [self.get_optimist_bayesian_probability(k, upper_bound) for k in range(self.K)]
+            index, _ = max(enumerate(machines_optimist_probabilities), key=operator.itemgetter(1))
+            return index
+
+    def process_decision_results(self, k, result):
+        self.machines_number_of_attempts[k] += 1
+        self.machines_sum_of_results[k] += result
+        self.sum_results += result
+        self.t += 1
+
+    def get_sum_results(self):
+        return self.sum_results
+
+
 
