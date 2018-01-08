@@ -189,7 +189,7 @@ class HomeMadeBayesianOptimistAlgorithm:
         self.T = T
         self.t = 0
         self.sum_results = 0
-        self.machines_number_of_attempts = [0.0] * K
+        self.machines_number_of_attempts = [0] * K
         self.machines_sum_of_results = [0.0] * K
 
     def get_machine_estimated_probability(self, k):
@@ -203,21 +203,18 @@ class HomeMadeBayesianOptimistAlgorithm:
         number_of_attempts = self.machines_number_of_attempts[k]
         sum_of_results = self.machines_sum_of_results[k]
         estimated_probability = self.get_machine_estimated_probability(k)
-
-        upper_bound_step = self.find_upper_bound_step(upper_bound, number_of_attempts)
-        return sum([binom.pmf(i, upper_bound_step, estimated_probability) for i in range(upper_bound_step + 1)]) / math.pow(2, number_of_attempts)
+        probabilities = [binom.pmf(i, number_of_attempts, estimated_probability) for i in range(number_of_attempts + 1)]
+        probabilities = [p for i, p in enumerate(probabilities) if float(i) / number_of_attempts >= upper_bound]
+        return sum(probabilities)
 
     def get_next_decision(self):
-        print("test")
-        if self.t < self.K:
-            return self.t
+        if self.t < self.K * 20: # degeulasse
+            return self.t % self.K
         else:
-            machines_estimated_probabilities = set([self.get_machine_estimated_probability(k) for k in range(self.K)])
-            print(machines_estimated_probabilities)
-            print(type(machines_estimated_probabilities))
-            max_probability = max(machines_estimated_probabilities)
-            print(machines_estimated_probabilities - {max_probability})
-            second_max_probability = max(machines_estimated_probabilities - {max_probability})
+            machines_estimated_probabilities = [self.get_machine_estimated_probability(k) for k in range(self.K)]
+            max_index, max_probability = max(enumerate(machines_estimated_probabilities), key=operator.itemgetter(1))
+            del machines_estimated_probabilities[max_index]
+            _, second_max_probability = max(enumerate(machines_estimated_probabilities), key=operator.itemgetter(1))
             upper_bound = min(1, max_probability + (max_probability - second_max_probability))
 
             machines_optimist_probabilities = [self.get_optimist_bayesian_probability(k, upper_bound) for k in range(self.K)]

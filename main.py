@@ -1,10 +1,10 @@
-from casino_machines import CasinoMachines
+from casino_machines import *
 from bandit_algorithm import *
 
 
 if __name__ == "__main__":
     K = 10
-    T = 2 #10000
+    T = 2000 # 10000
     NB_SCENARIOS = 1 #100
 
     sum_results = 0
@@ -13,7 +13,6 @@ if __name__ == "__main__":
         bandit = HomeMadeBayesianOptimistAlgorithm(K, T)
 
         for _ in range(T):
-            print("bouuuu")
             k = bandit.get_next_decision()
             result = casino.run(k)
             bandit.process_decision_results(k, result)
